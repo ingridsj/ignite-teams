@@ -18,6 +18,7 @@ export function Groups() {
         data={groups}
         keyExtractor={(item) => item}
         renderItem={({ item }) => <GroupCard title={item} />}
+        contentContainerStyle={!groups.length && { flex: 1 }}
         ListEmptyComponent={() => (
           <ListEmpty message="Que tal cadastrar a primeira turma?" />
         )}
