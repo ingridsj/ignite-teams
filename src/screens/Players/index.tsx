@@ -6,12 +6,14 @@ import { ButtonIcon } from "@components/ButtonIcon";
 import { Input } from "@components/Input";
 import { Filter } from "@components/Filter";
 import { PlayerCard } from "@components/PlayerCard";
+import { ListEmpty } from "@components/ListEmpty";
+import { Button } from "@components/Button";
 
 import * as S from "./styles";
 
 export function Players() {
   const [team, setTeam] = useState("TIME A");
-  const [players, setPlayers] = useState(["Ingrid", "José", "Dani"]);
+  const [players, setPlayers] = useState([]);
 
   return (
     <S.Container>
@@ -46,7 +48,16 @@ export function Players() {
         renderItem={({ item }) => (
           <PlayerCard name={item} onRemove={() => {}} />
         )}
+        ListEmptyComponent={() => (
+          <ListEmpty message="Não há pessoas nesse time" />
+        )}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          { paddingBottom: 100 },
+          !players.length && { flex: 1 },
+        ]}
       />
+      <Button title="Remover Turma" type="SECONDARY" />
     </S.Container>
   );
 }
