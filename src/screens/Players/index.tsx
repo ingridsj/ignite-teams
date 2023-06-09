@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FlatList, Alert } from "react-native";
 import { useRoute } from "@react-navigation/native";
 import { playerAddByGroup } from "@storage/player/playerAddByGroup";
-import { playersGetByGroup } from "@storage/player/playersGetByGroup";
+import { playersGetByGroupAndTeam } from "@storage/player/playersGetByGroupAndTeam";
+import { PlayerStorageDTO } from "@storage/player/PlayerStorageDTO";
 import { AppError } from "@utils/AppError";
 import { Header } from "@components/Header";
 import { Highlight } from "@components/Highlight";
@@ -22,7 +23,7 @@ type RouteParams = {
 export function Players() {
   const [team, setTeam] = useState("TIME A");
   const [newPlayerName, setNewPlayerName] = useState("");
-  const [players, setPlayers] = useState([]);
+  const [players, setPlayers] = useState<PlayerStorageDTO[]>([]);
 
   const route = useRoute();
 
@@ -43,8 +44,8 @@ export function Players() {
 
     try {
       await playerAddByGroup(newPlayer, group);
-      const players = await playersGetByGroup(group);
-      console.log(players);
+      await fetchPlayersByTeam();
+      setNewPlayerName("");
     } catch (error) {
       if (error instanceof AppError) {
         Alert.alert("Nova pessoa", error.message);
@@ -55,12 +56,30 @@ export function Players() {
     }
   }
 
+  async function fetchPlayersByTeam() {
+    try {
+      const playersByTeam = await playersGetByGroupAndTeam(group, team);
+      setPlayers(playersByTeam);
+    } catch (error) {
+      console.log(error);
+      Alert.alert(
+        "Pessoas",
+        "Não foi possível carregar as pessoas do time selecionado."
+      );
+    }
+  }
+
+  useEffect(() => {
+    fetchPlayersByTeam();
+  }, [team]);
+
   return (
     <S.Container>
       <Header showBackButton />
       <Highlight title={group} subtitle="adicione a galera e separe os times" />
       <S.Form>
         <Input
+          value={newPlayerName}
           placeholder="Nome do participante"
           autoCorrect={false}
           onChangeText={setNewPlayerName}
@@ -85,9 +104,9 @@ export function Players() {
       </S.HeaderList>
       <FlatList
         data={players}
-        keyExtractor={(item) => item}
+        keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
-          <PlayerCard name={item} onRemove={() => {}} />
+          <PlayerCard name={item.name} onRemove={() => {}} />
         )}
         ListEmptyComponent={() => (
           <ListEmpty message="Não há pessoas nesse time" />
