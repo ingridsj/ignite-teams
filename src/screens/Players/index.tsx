@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { FlatList, Alert, TextInput } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { playerAddByGroup } from "@storage/player/playerAddByGroup";
 import { playersGetByGroupAndTeam } from "@storage/player/playersGetByGroupAndTeam";
 import { PlayerStorageDTO } from "@storage/player/PlayerStorageDTO";
@@ -16,6 +16,7 @@ import { ListEmpty } from "@components/ListEmpty";
 import { Button } from "@components/Button";
 
 import * as S from "./styles";
+import { groupRemoveByName } from "@storage/group/groupRemoveByName";
 
 type RouteParams = {
   group: string;
@@ -29,6 +30,8 @@ export function Players() {
   const route = useRoute();
 
   const { group } = route.params as RouteParams;
+
+  const navigation = useNavigation();
 
   const newPlayerNameInputRef = useRef<TextInput>(null);
 
@@ -63,26 +66,37 @@ export function Players() {
     }
   }
 
-  async function handlePlayerRemove(playerName: string) {
+  async function playerRemove(playerName: string) {
     try {
-      Alert.alert("Remover", `Remover o jogador ${playerName}?`, [
-        {
-          text: "Sim",
-          onPress: async () => {
-            await playerRemoveByGroup(playerName, group);
-            fetchPlayersByTeam();
-          },
-        },
-        {
-          text: "Não",
-          style: "cancel",
-        },
-      ]);
+      await playerRemoveByGroup(playerName, group);
+      await fetchPlayersByTeam();
     } catch (error) {
-      console.log(error);
-
       Alert.alert("Remover pessoa", "Não foi possível remover essa pessoa.");
     }
+  }
+
+  async function handlePlayerRemove(playerName: string) {
+    Alert.alert("Remover", `Remover o jogador ${playerName}?`, [
+      { text: "Não", style: "cancel" },
+      { text: "Sim", onPress: () => playerRemove(playerName) },
+    ]);
+  }
+
+  async function groupRemove() {
+    try {
+      await groupRemoveByName(group);
+      navigation.navigate("groups");
+    } catch (error) {
+      console.log(error);
+      Alert.alert("Remover Grupo", "Não foi posível remover o grupo");
+    }
+  }
+
+  async function handleGroupRemove() {
+    Alert.alert("Remover", "Deseja remover o grupo?", [
+      { text: "Não", style: "cancel" },
+      { text: "Sim", onPress: () => groupRemove() },
+    ]);
   }
 
   async function fetchPlayersByTeam() {
@@ -154,7 +168,11 @@ export function Players() {
           !players.length && { flex: 1 },
         ]}
       />
-      <Button title="Remover Turma" type="SECONDARY" />
+      <Button
+        title="Remover Turma"
+        type="SECONDARY"
+        onPress={handleGroupRemove}
+      />
     </S.Container>
   );
 }
