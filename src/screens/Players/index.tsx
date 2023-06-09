@@ -4,6 +4,7 @@ import { useRoute } from "@react-navigation/native";
 import { playerAddByGroup } from "@storage/player/playerAddByGroup";
 import { playersGetByGroupAndTeam } from "@storage/player/playersGetByGroupAndTeam";
 import { PlayerStorageDTO } from "@storage/player/PlayerStorageDTO";
+import { playerRemoveByGroup } from "@storage/player/playerRemoveByGroup";
 import { AppError } from "@utils/AppError";
 import { Header } from "@components/Header";
 import { Highlight } from "@components/Highlight";
@@ -62,6 +63,28 @@ export function Players() {
     }
   }
 
+  async function handlePlayerRemove(playerName: string) {
+    try {
+      Alert.alert("Remover", `Remover o jogador ${playerName}?`, [
+        {
+          text: "Sim",
+          onPress: async () => {
+            await playerRemoveByGroup(playerName, group);
+            fetchPlayersByTeam();
+          },
+        },
+        {
+          text: "Não",
+          style: "cancel",
+        },
+      ]);
+    } catch (error) {
+      console.log(error);
+
+      Alert.alert("Remover pessoa", "Não foi possível remover essa pessoa.");
+    }
+  }
+
   async function fetchPlayersByTeam() {
     try {
       const playersByTeam = await playersGetByGroupAndTeam(group, team);
@@ -96,7 +119,6 @@ export function Players() {
         />
         <ButtonIcon icon="add" onPress={handleAddPlayer} />
       </S.Form>
-
       <S.HeaderList>
         <FlatList
           data={["TIME A", "TIME B"]}
@@ -116,7 +138,12 @@ export function Players() {
         data={players}
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
-          <PlayerCard name={item.name} onRemove={() => {}} />
+          <PlayerCard
+            name={item.name}
+            onRemove={() => {
+              handlePlayerRemove(item.name);
+            }}
+          />
         )}
         ListEmptyComponent={() => (
           <ListEmpty message="Não há pessoas nesse time" />
